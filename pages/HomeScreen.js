@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useContext } from "react";
 import {
   View,
   Text,
@@ -10,17 +10,20 @@ import {
   TextInput,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { AuthContext } from "../context/AuthContext";
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
+  const { userData, logout } = useContext(AuthContext);
+
   // 2. STATE UNTUK STATUS TOMBOL CHECK-IN
   const [isCheckedIn, setIsCheckedIn] = useState(false);
 
   // 3. STATE UNTUK JAM DIGITAL
   const [currentTime, setCurrentTime] = useState("Memuat jam...");
 
-  // 4. STATE & REF UNTUK CATATAN (Baru)
+  // 4. STATE & REF UNTUK CATATAN
   const [note, setNote] = useState("");
-  const noteInputRef = useRef(null); // Membuat "kait" kosong untuk UI
+  const noteInputRef = useRef(null);
 
   // Simulasi stats karena data dipindah ke HistoryScreen
   const attendanceStats = useMemo(() => {
@@ -36,11 +39,13 @@ const HomeScreen = () => {
 
   const handleCheckIn = () => {
     if (isCheckedIn) return Alert.alert("Perhatian", "Anda sudah Check In.");
+
     if (note.trim() === "") {
       Alert.alert("Peringatan", "Catatan kehadiran wajib diisi!");
       noteInputRef.current.focus();
       return;
     }
+
     setIsCheckedIn(true);
     Alert.alert("Sukses", `Berhasil Check In pada pukul ${currentTime}`);
   };
@@ -50,8 +55,11 @@ const HomeScreen = () => {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>Attendance App</Text>
-          {/* Tampilkan State Jam Digital */}
           <Text style={styles.clockText}>{currentTime}</Text>
+
+          <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Student Card */}
@@ -60,9 +68,11 @@ const HomeScreen = () => {
             <MaterialIcons name="person" size={40} color="#555" />
           </View>
           <View>
-            <Text style={styles.name}>Budi Susanto</Text>
-            <Text>NIM : 0325260031</Text>
-            <Text>Class : Informatika-2B</Text>
+            <Text style={styles.name}>
+              {userData?.mhsName || "Budi Susanto"}
+            </Text>
+            <Text>NIM : {userData?.mhsNim || "0325260031"}</Text>
+            <Text>Class : {userData?.prodi || "Informatika-2B"}</Text>
           </View>
         </View>
 
@@ -73,10 +83,9 @@ const HomeScreen = () => {
           <Text>08:00 - 10:00</Text>
           <Text>Lab 3</Text>
 
-          {/* Fitur Baru: Kolom Input Catatan dengan useRef */}
           {!isCheckedIn && (
             <TextInput
-              ref={noteInputRef} // <-- Menempelkan referensi ke elemen ini
+              ref={noteInputRef}
               style={styles.inputCatatan}
               placeholder="Tulis catatan (cth: Hadir lab)"
               value={note}
@@ -98,7 +107,7 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Fitur Baru: Statistik Kehadiran (Hasil useMemo) */}
+        {/* Statistik Kehadiran */}
         <View style={styles.statsCard}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>
@@ -132,7 +141,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 20,
   },
 
   headerRow: {
@@ -279,6 +287,20 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 14,
     color: "gray",
+  },
+
+  logoutButton: {
+    marginLeft: 12,
+    backgroundColor: "#d9534f",
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+
+  logoutText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
   },
 });
 
